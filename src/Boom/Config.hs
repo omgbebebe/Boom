@@ -36,6 +36,8 @@ fromEnv c e v =
     "B_EXT_IF"            -> c{extIf=v}
     "B_INT_IF"            -> c{intIf=v}
     "B_NODES_FILE"        -> c{nodesFile=vp}
+    "B_LEASES_FILE"       -> c{leasesFile=vp}
+    "B_DISTR_PATH"        -> c{distrPath=vp}
     _ -> c
 
 
@@ -56,6 +58,8 @@ data Config = Config{ commitHash    :: Text
                     , extIf         :: Text
                     , intIf         :: Text
                     , nodesFile     :: FilePath
+                    , leasesFile    :: FilePath
+                    , distrPath     :: FilePath
                     }
             deriving (Eq, Show)
 
@@ -66,17 +70,19 @@ instance Default Config where
               , lvSnapSize      = "1G"
               , chefHostname    = "chef.wd.com"
               , chefAddr        = "10.0.104.2"
-              , chefClientRpm   = "./distr/chef-11.8.0-1.el6.x86_64.rpm"
+              , chefClientRpm   = "chef-11.8.0-1.el6.x86_64.rpm"
               , envFile         = "./wdm_ha.json"
               , envName         = "./wdm_ha"
               , defaultGw       = "192.168.122.1"
               , httpProxy       = "http://10.0.104.1:3128"
               , httpsProxy      = "http://10.0.104.1:3128"
               , yumProxy        = "http://10.0.104.1:3128"
-              , sshKey          = "~/.ssh/id_rsa"
-              , extIf           = "eth1"
-              , intIf           = "eth0"
+              , sshKey          = "/home/scor/.ssh/id_rsa"
+              , extIf           = "eth0"
+              , intIf           = "eth1"
               , nodesFile       = "./vms.org"
+              , leasesFile      = "/var/lib/libvirt/dnsmasq/default.leases"
+              , distrPath       = "./distr"
               }
 
 loadConf :: Sh (Config)
@@ -91,6 +97,7 @@ data Node = Node{ nodeName   :: Text
                 , nodeITempl :: Text
                 , nodeVTempl :: Text
                 , volSize    :: Text
+                , controlIP  :: Maybe Text
                 }
           deriving (Eq, Show)
 
@@ -102,6 +109,6 @@ loadNodes Config{..} = shelly $ do
   let ls  = DL.drop 2 $ T.lines cont
       vms = DL.map (\v -> let v' = T.words $ T.filter (/='|') v
                               [n,o,r,it,vt] = v'
-                          in Node n o r it vt lvSnapSize
+                          in Node n o r it vt lvSnapSize Nothing
                    ) ls
   return vms
