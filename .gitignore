@@ -2,6 +2,7 @@
 *.hi
 *~
 dist/
+distr/
 .cabal-sandbox/
 .shelly/
 chef-cookbooks/
