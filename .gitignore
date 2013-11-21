@@ -1,6 +1,7 @@
 *.o
 *.hi
 *~
+*.swp
 dist/
 distr/
 .cabal-sandbox/
