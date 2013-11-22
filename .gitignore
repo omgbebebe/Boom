@@ -7,3 +7,5 @@ distr/
 .cabal-sandbox/
 .shelly/
 chef-cookbooks/
+.chef/
+knife.rb
