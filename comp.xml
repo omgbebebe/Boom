@@ -21,7 +21,7 @@
   <devices>
     <emulator>/usr/bin/kvm-spice</emulator>
     <disk type='block' device='disk'>
-      <driver name='qemu' type='raw'/>
+      <driver name='qemu' type='raw' io='native' cache='unsafe'/>
       <source dev='node_volume'/>
       <target dev='vda' bus='virtio'/>
       <alias name='virtio-disk0'/>

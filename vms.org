@@ -3,4 +3,4 @@
 | ctrl1.wd.com |    20 | ha-controller1 | ctrl.xml | wd-node.template |
 | ctrl2.wd.com |    21 | ha-controller2 | ctrl.xml | wd-node.template |
 | comp1.wd.com |    22 | single-compute | comp.xml | wd-node.template |
-| comp2.wd.com |    23 | single-compute | comp.xml | wd-node.template |
+

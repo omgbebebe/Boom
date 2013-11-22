@@ -72,7 +72,7 @@ instance Default Config where
               , chefAddr        = "10.0.104.2"
               , chefClientRpm   = "chef-11.8.0-1.el6.x86_64.rpm"
               , envFile         = "./wdm_ha.json"
-              , envName         = "./wdm_ha"
+              , envName         = "wdm_ha"
               , defaultGw       = "192.168.122.1"
               , httpProxy       = "http://10.0.104.1:3128"
               , httpsProxy      = "http://10.0.104.1:3128"

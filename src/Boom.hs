@@ -3,7 +3,6 @@
 {-# LANGUAGE QuasiQuotes #-}
 module Main where
 
---import Boom.Helpers
 import Prelude hiding (FilePath)
 import Shelly
 import Data.Text as T
@@ -30,19 +29,18 @@ main = shelly $ verbosely $ do
               )
   liftIO $ waitForChildren
   echo "Preparation is done."
+  waitForSolr $ T.concat ["chef_environment:", envName conf, " AND role:ha-controller1"]
+  let ssh_key = toTextIgnore (sshKey conf)
+  escaping False $
+    knife_ "ssh" [T.concat ["\"chef_environment:",envName conf," AND role:ha-controller1\""]
+                 ,"chef-client", "-x", "root", "-i", ssh_key]
+  escaping False $
+    knife_ "ssh" [T.concat ["\"chef_environment:",envName conf," AND (AND (role:ha-controller2 OR role:single-compute)\""]
+                 ,"chef-client", "-x", "root", "-i", ssh_key]
+  escaping False $
+    knife_ "ssh" [T.concat ["\"chef_environment:",envName conf," AND role:ha-controller1\""]
+                 ,"chef-client", "-x", "root", "-i", ssh_key]
   echo "You are Boomed!:)"
-{--
-  recreate_node ""
-  destroy_instances conf
-  destroy_volumes conf
-  create_volumes conf
-  create_instances conf
-  start_instances conf
-
-  update_cookbooks conf
-  chef_update conf
-  deploy_nodes conf
---}
 
 
 update_cookbooks conf = shelly $ silently $ do
@@ -69,9 +67,10 @@ provision_node' conf@Config{..} node@Node{..} = shelly $ do
     Nothing -> errorExit "Node IP is not set"
     Just ip -> do
       echo $ "Prov: Node IP " `append` ip
-      knife_ "node" ["delete", nodeName, "-y"]
-      knife_ "client" ["delete", nodeName, "-y"]
+      mayFail $ knife_ "node" ["delete", nodeName, "-y"]
+      mayFail $ knife_ "client" ["delete", nodeName, "-y"]
       knife_ "bootstrap" [ip,"-x","root","-E",envName,"-i",toTextIgnore sshKey,"-r",roles]
+      knife_ "node" ["run_list","add", nodeName, T.concat ["role[",nodeRole,"]"]]
       where roles = if isInfixOf "controller" (nodeRole)
                     then T.concat ["role[base]",",","recipe[build-essential]"]
                     else "role[base]"
@@ -100,7 +99,7 @@ destroy_instance :: Node -> Sh ()
 destroy_instance Node{..} = shelly $ silently $ do
   setenv "LANG" "C"
   is <- fmap (L.init . T.lines) $ sudo "virsh" ["list","--all", "--name"]
-  let inst = L.filter (==nodeName) is --L.map (L.drop 0 . T.words) is
+  let inst = L.filter (==nodeName) is
   forM_ inst (\x -> sudo_ "virsh" ["destroy", x])
 
 
@@ -138,6 +137,8 @@ config_instance conf@Config{..} node@Node{..} = shelly $ do
   ip <- liftIO $ wait_node_ip (T.unpack $ toTextIgnore leasesFile) mac
   echo mac
   echo $ "IP: " `append` ip
+  escaping False $ sudo_ "sed" [T.concat ["-i '/.*",nodeName,"$/d' /etc/hosts"]]
+  add_to_hosts ip nodeName
   echo "Waiting for SSH reply"
   liftIO $ wait_for_port ip 22
   script <- render_script conf node
@@ -206,3 +207,17 @@ rpm -Uvhi /tmp/#{toTextIgnore chefClientRpm};
 
 
 knife_ cmd args = run_ "knife" (cmd:args)
+
+
+add_to_hosts :: Text -> Text -> Sh ()
+add_to_hosts ip name = shelly $ do
+  run "echo" [ip, "    ", name] -|- sudo_ "tee" ["-a", "/etc/hosts"]
+
+
+waitForSolr :: Text -> Sh ()
+waitForSolr req = shelly $ do
+  res <- run "knife" ["search", "node", req]
+  liftIO $ threadDelay (2 * 1000000)
+  if isInfixOf "0 items found" res
+    then waitForSolr req
+    else return ()
