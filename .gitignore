@@ -9,3 +9,4 @@ distr/
 chef-cookbooks/
 .chef/
 knife.rb
+*.json
