@@ -35,7 +35,7 @@ main = shelly $ verbosely $ do
     knife_ "ssh" [T.concat ["\"chef_environment:",envName conf," AND role:ha-controller1\""]
                  ,"chef-client", "-x", "root", "-i", ssh_key]
   escaping False $
-    knife_ "ssh" [T.concat ["\"chef_environment:",envName conf," AND (AND (role:ha-controller2 OR role:single-compute)\""]
+    knife_ "ssh" [T.concat ["\"chef_environment:",envName conf," AND (role:ha-controller2 OR role:single-compute)\""]
                  ,"chef-client", "-x", "root", "-i", ssh_key]
   escaping False $
     knife_ "ssh" [T.concat ["\"chef_environment:",envName conf," AND role:ha-controller1\""]
