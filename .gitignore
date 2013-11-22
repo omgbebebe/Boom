@@ -10,3 +10,4 @@ chef-cookbooks/
 .chef/
 knife.rb
 *.json
+cabal.sandbox.config
