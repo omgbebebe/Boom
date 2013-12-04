@@ -23,8 +23,8 @@
     <disk type='block' device='disk'>
       <driver name='qemu' type='raw' io='native' cache='unsafe'/>
       <source dev='node_volume'/>
-      <target dev='vda' bus='virtio'/>
-      <alias name='virtio-disk0'/>
+      <target dev='sda' bus='ide'/>
+      <alias name='ide-disk0'/>
       <address type='pci' domain='0x0000' bus='0x00' slot='0x04' function='0x0'/>
     </disk>
     <disk type='block' device='cdrom'>
